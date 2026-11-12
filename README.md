@@ -2,7 +2,7 @@
 
 > Tạo và quản lý mã QR cá nhân – Miễn phí, không cần đăng nhập, hỗ trợ Cloud.
 
-**Live demo:** https://[username].github.io/QR-Generated/
+**Live demo:** https://vv-duy-nt.github.io/qrscanner.github.io/
 
 ---
 
@@ -34,8 +34,8 @@
 Yêu cầu: Node.js 24 và npm 11.
 
 ```bash
-git clone https://github.com/[username]/QR-Generated.git
-cd QR-Generated
+git clone https://github.com/vv-duy-nt/qrscanner.github.io.git
+cd qrscanner.github.io
 nvm use
 npm install
 cp .env.example .env     # điền Supabase keys nếu muốn dùng Cloud
@@ -74,8 +74,8 @@ Chỉ dùng Publishable/anon key ở frontend. Không đưa secret key hoặc
 4. Trong Supabase > Authentication > Providers > Google, bật provider và điền
    Client ID/Client Secret.
 5. Trong Supabase > Authentication > URL Configuration:
-   - Site URL: URL production đầy đủ, ví dụ `https://USERNAME.github.io/QR-Generated/`
-   - Redirect URLs: thêm Site URL ở trên và `http://localhost:5173/QR-Generated/`
+   - Site URL: `https://vv-duy-nt.github.io/qrscanner.github.io/`
+   - Redirect URLs: thêm Site URL ở trên và `http://localhost:5173/`
 
 ### 3. Google Web Risk
 
@@ -91,6 +91,10 @@ Sau khi cấu hình, chạy lại `npm run dev`. Trang Cài đặt sẽ hiện n
 Google; QR và folder được đồng bộ hai chiều, còn URL được kiểm tra qua Edge Function.
 
 ## Deploy lên GitHub Pages
+
+Trước lần deploy đầu tiên, vào **Settings > Pages > Build and deployment** và
+chọn **Source: GitHub Actions**. Đây là bước bắt buộc để GitHub tạo Pages site
+cho repository.
 
 Thêm secrets vào repository (Settings > Secrets and variables > Actions):
 - `VITE_SUPABASE_URL`

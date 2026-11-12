@@ -2,13 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+const repositoryName = process.env.GITHUB_REPOSITORY?.split('/')[1]
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
   ],
-  base: '/QR-Generated/',
+  // GitHub project Pages is served under /<repository>/; local dev stays at /.
+  base: repositoryName ? `/${repositoryName}/` : '/',
   build: {
     outDir: 'dist',
     sourcemap: false,
