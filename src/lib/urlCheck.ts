@@ -1,4 +1,5 @@
 import type { URLCheckResult } from '../types';
+import { supabase, isSupabaseConfigured } from './supabase';
 
 /** Supported URL schemes */
 const ALLOWED_SCHEMES = ['http:', 'https:'];
@@ -41,9 +42,7 @@ export function validateUrlSyntax(raw: string): { valid: boolean; error?: string
  * Falls back gracefully if Edge Function is unavailable.
  */
 export async function checkUrlSafety(normalizedUrl: string): Promise<URLCheckResult> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-
-  if (!supabaseUrl) {
+  if (!isSupabaseConfigured || !supabase) {
     return {
       status: 'unchecked',
       message: 'Chưa cấu hình dịch vụ kiểm tra URL. QR sẽ được tạo nhưng URL chưa được xác minh.',
@@ -52,29 +51,28 @@ export async function checkUrlSafety(normalizedUrl: string): Promise<URLCheckRes
   }
 
   try {
-    const res = await fetch(`${supabaseUrl}/functions/v1/check-url`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: normalizedUrl }),
-      signal: AbortSignal.timeout(8000),
+    const { data, error } = await supabase.functions.invoke('check-url', {
+      body: { url: normalizedUrl },
     });
+    if (error) throw error;
+    const result = data as { safe: boolean | null; threats?: string[]; message?: string };
 
-    if (!res.ok) throw new Error(`Edge Function returned ${res.status}`);
-    const data = await res.json() as { safe: boolean; threats?: string[] };
-
-    if (data.safe) {
+    if (result.safe === true) {
       return {
         status: 'safe',
         message: 'Chưa phát hiện rủi ro. (Không đảm bảo an toàn tuyệt đối.)',
         normalizedUrl,
       };
     }
-    return {
-      status: 'danger',
-      message: `Cảnh báo: URL này có thể nguy hiểm. Mối đe dọa phát hiện: ${(data.threats ?? []).join(', ')}`,
-      normalizedUrl,
-    };
-  } catch (err) {
+    if (result.safe === false) {
+      return {
+        status: 'danger',
+        message: `Cảnh báo: URL này có thể nguy hiểm. Mối đe dọa phát hiện: ${(result.threats ?? []).join(', ')}`,
+        normalizedUrl,
+      };
+    }
+    return { status: 'error', message: result.message ?? 'Dịch vụ kiểm tra URL chưa sẵn sàng.', normalizedUrl };
+  } catch {
     return {
       status: 'error',
       message: 'Không thể kiểm tra URL lúc này. QR vẫn có thể được tạo.',

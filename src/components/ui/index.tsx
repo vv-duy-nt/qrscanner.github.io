@@ -11,7 +11,7 @@ export function Badge({ children, variant = 'default', className }: BadgeProps) 
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+        'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium',
         {
           'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300': variant === 'default',
           'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400': variant === 'success',
@@ -56,8 +56,8 @@ export function Card({ children, className, onClick, hover }: CardProps) {
     <div
       onClick={onClick}
       className={cn(
-        'rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 shadow-sm',
-        hover && 'cursor-pointer hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-150',
+        'rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900',
+        hover && 'cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors duration-150',
         className
       )}
     >

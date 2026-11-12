@@ -69,6 +69,9 @@ export interface QRFolder {
   color: string;
   createdAt: string;
   updatedAt: string;
+  syncStatus?: 'local' | 'synced' | 'pending' | 'conflict';
+  revision?: number;
+  userId?: string;
 }
 
 // ─── Export Types ─────────────────────────────────────────────────────────────

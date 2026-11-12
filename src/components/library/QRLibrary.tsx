@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Search, Plus, Trash2, Edit2, Copy, Download, FolderOpen,
-  MoreVertical, Upload, FileJson, Tag, Grid3X3, List,
+  Search, Trash2, Edit2, Copy, Download,
+  MoreVertical, Upload, FileJson, Grid3X3,
 } from 'lucide-react';
 import { useQRStore } from '../../store';
 import { Button } from '../ui/Button';
@@ -47,14 +47,14 @@ function QRCard({ qr, onEdit, onDelete, onClone, onDownload }: {
             {qr.description && (
               <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{qr.description}</p>
             )}
-            <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1 truncate">{truncate(qr.url, 50)}</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 truncate">{truncate(qr.url, 50)}</p>
           </div>
           <div className="relative shrink-0">
             <Button size="icon" variant="ghost" onClick={() => setMenuOpen((p) => !p)}>
               <MoreVertical className="h-4 w-4" />
             </Button>
             {menuOpen && (
-              <div className="absolute right-0 top-9 z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl w-44 py-1 text-sm">
+              <div className="absolute right-0 top-9 z-20 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg w-44 py-1 text-sm">
                 <MenuItem icon={Edit2} label="Chỉnh sửa" onClick={() => { onEdit(); setMenuOpen(false); }} />
                 <MenuItem icon={Copy} label="Nhân bản" onClick={() => { onClone(); setMenuOpen(false); }} />
                 <MenuItem icon={Download} label="Tải xuống" onClick={() => { onDownload(); setMenuOpen(false); }} />
@@ -105,7 +105,7 @@ export function QRLibrary() {
 
   useEffect(() => {
     Promise.all([loadAllQR(), loadFolders()]).finally(() => setIsLoading(false));
-  }, []);
+  }, [loadAllQR, loadFolders]);
 
   const handleSearch = useCallback((q: string) => {
     searchQR(q);
@@ -153,7 +153,7 @@ export function QRLibrary() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3 p-4 md:p-6 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-wrap items-center gap-3 px-5 py-4 md:px-8 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
         <div className="flex-1 min-w-48">
           <Input
             placeholder="Tìm kiếm QR, URL, tag..."
@@ -177,10 +177,10 @@ export function QRLibrary() {
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+      <div className="flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8 bg-zinc-50/50 dark:bg-zinc-950">
         {isLoading ? (
           <div className="flex items-center justify-center h-40 text-zinc-400">
-            <div className="animate-spin h-6 w-6 border-2 border-indigo-500 border-t-transparent rounded-full" />
+            <div className="animate-spin h-6 w-6 border-2 border-zinc-500 border-t-transparent rounded-full" />
           </div>
         ) : qrCodes.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-60 text-zinc-400 gap-3">

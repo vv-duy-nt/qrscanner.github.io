@@ -12,7 +12,7 @@ export function App() {
   const { view } = useQRStore();
 
   return (
-    <div className="flex h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white overflow-hidden">
+    <div className="flex h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-hidden">
       <Sidebar />
       <main className="flex-1 overflow-hidden">
         {view === 'editor' && <QREditor />}

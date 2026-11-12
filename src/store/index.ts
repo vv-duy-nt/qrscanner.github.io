@@ -12,7 +12,7 @@ import {
   exportLibraryJSON,
   importLibraryJSON,
 } from '../lib/db';
-import { syncPendingToCloud, fetchAndMergeFromCloud, deleteFromCloud } from '../lib/sync';
+import { syncPendingToCloud, fetchAndMergeFromCloud, deleteFromCloud, deleteFolderFromCloud } from '../lib/sync';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 function generateId(): string {
@@ -58,6 +58,7 @@ interface QRStore extends EditorState {
   user: AppUser | null;
   isLoading: boolean;
   isSyncing: boolean;
+  syncMessage: string;
 
   // Data
   qrCodes: QRRecord[];
@@ -119,6 +120,7 @@ export const useQRStore = create<QRStore>()(
       user: null,
       isLoading: false,
       isSyncing: false,
+      syncMessage: '',
 
       // Initial data state
       qrCodes: [],
@@ -243,18 +245,24 @@ export const useQRStore = create<QRStore>()(
       },
 
       createFolder: async (name, color) => {
+        const user = get().user;
         const folder: QRFolder = {
           id: generateId(),
           name,
           color,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          syncStatus: user ? 'pending' : 'local',
+          revision: 0,
+          userId: user?.id,
         };
         await saveFolder(folder);
         await get().loadFolders();
+        if (user) get().syncToCloud().catch(console.error);
       },
 
       removeFolder: async (id) => {
+        if (get().user) await deleteFolderFromCloud(id);
         await deleteFolder(id);
         await get().loadFolders();
         await get().loadAllQR();
@@ -284,10 +292,12 @@ export const useQRStore = create<QRStore>()(
           alert('Supabase chưa được cấu hình. Vui lòng thêm VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY vào .env');
           return;
         }
-        await supabase.auth.signInWithOAuth({
+        const redirectTo = new URL(import.meta.env.BASE_URL, window.location.origin).toString();
+        const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: window.location.origin },
+          options: { redirectTo },
         });
+        if (error) throw error;
       },
 
       logout: async () => {
@@ -300,18 +310,34 @@ export const useQRStore = create<QRStore>()(
       syncToCloud: async () => {
         const { user } = get();
         if (!user) return;
-        set({ isSyncing: true });
-        await syncPendingToCloud(user.id).catch(console.error);
-        set({ isSyncing: false });
+        set({ isSyncing: true, syncMessage: '' });
+        try {
+          const result = await syncPendingToCloud(user.id);
+          const message = result.failed
+            ? `Đồng bộ ${result.synced} mục, ${result.failed} mục thất bại.`
+            : `Đã đồng bộ ${result.synced} mục lên Cloud.`;
+          set({ syncMessage: message });
+          await Promise.all([get().loadAllQR(), get().loadFolders()]);
+        } catch (error) {
+          set({ syncMessage: `Đồng bộ thất bại: ${error instanceof Error ? error.message : String(error)}` });
+        } finally {
+          set({ isSyncing: false });
+        }
       },
 
       syncFromCloud: async () => {
         const { user } = get();
         if (!user) return;
-        set({ isSyncing: true });
-        await fetchAndMergeFromCloud(user.id).catch(console.error);
-        await get().loadAllQR();
-        set({ isSyncing: false });
+        set({ isSyncing: true, syncMessage: '' });
+        try {
+          const merged = await fetchAndMergeFromCloud(user.id);
+          await Promise.all([get().loadAllQR(), get().loadFolders()]);
+          set({ syncMessage: `Đã tải và cập nhật ${merged} mục từ Cloud.` });
+        } catch (error) {
+          set({ syncMessage: `Tải Cloud thất bại: ${error instanceof Error ? error.message : String(error)}` });
+        } finally {
+          set({ isSyncing: false });
+        }
       },
     }),
     {

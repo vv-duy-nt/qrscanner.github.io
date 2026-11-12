@@ -2,6 +2,17 @@ import QRCodeStyling from 'qr-code-styling';
 import { jsPDF } from 'jspdf';
 import type { QRDesign, ExportOptions } from '../../types';
 
+const BYTE_CAPACITY = { L: 2953, M: 2331, Q: 1663, H: 1273 } as const;
+
+/** Return a user-facing error when data cannot fit in a version 40 byte-mode QR. */
+export function getQRCapacityError(data: string, design: Pick<QRDesign, 'errorCorrection'>): string | undefined {
+  const bytes = new TextEncoder().encode(data).length;
+  const capacity = BYTE_CAPACITY[design.errorCorrection];
+  if (bytes <= capacity) return undefined;
+
+  return `URL quá dài để tạo QR ở mức sửa lỗi ${design.errorCorrection} (${bytes.toLocaleString('vi-VN')}/${capacity.toLocaleString('vi-VN')} byte). Hãy rút gọn URL hoặc chọn mức sửa lỗi thấp hơn.`;
+}
+
 /** Build QRCodeStyling options from our design object */
 function buildQROptions(url: string, design: QRDesign, size?: number): ConstructorParameters<typeof QRCodeStyling>[0] {
   const s = size ?? design.size;
@@ -26,9 +37,14 @@ function buildQROptions(url: string, design: QRDesign, size?: number): Construct
     cornersSquareOptions: { type: design.cornerSquareType, color: design.foregroundColor },
     cornersDotOptions: { type: design.cornerDotType, color: design.foregroundColor },
     image: design.logoUrl ?? undefined,
-    imageOptions: design.logoUrl
-      ? { crossOrigin: 'anonymous', margin: design.logoMargin ?? 4, imageSize: (design.logoSize ?? 30) / 100 }
-      : undefined,
+    // qr-code-styling 1.9.x does not tolerate an explicit undefined here:
+    // it replaces the defaults and then reads imageOptions.hideBackgroundDots.
+    imageOptions: {
+      crossOrigin: 'anonymous',
+      hideBackgroundDots: true,
+      margin: design.logoMargin ?? 4,
+      imageSize: (design.logoSize ?? 30) / 100,
+    },
   };
 }
 

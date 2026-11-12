@@ -7,39 +7,42 @@ import { supabase } from '../lib/supabase';
  * Call once at the top of the app.
  */
 export function useAuthSync() {
-  const { setUser, syncFromCloud, loadAllQR } = useQRStore();
-
   useEffect(() => {
     if (!supabase) return;
+    let activeUserId: string | null = null;
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data }: { data: { session: { user: { id: string; email?: string; user_metadata?: Record<string, string> } } | null } }) => {
-      const session = data.session;
+    const syncAfterLogin = () => {
+      const store = useQRStore.getState();
+      store.syncFromCloud().then(() => useQRStore.getState().syncToCloud()).catch(console.error);
+    };
+
+    const applySession = (session: { user: { id: string; email?: string; user_metadata?: Record<string, string> } } | null) => {
+      const store = useQRStore.getState();
       if (session?.user) {
-        setUser({
+        if (activeUserId === session.user.id) return;
+        activeUserId = session.user.id;
+        store.setUser({
           id: session.user.id,
           email: session.user.email ?? '',
           name: session.user.user_metadata?.['full_name'] ?? '',
           avatarUrl: session.user.user_metadata?.['avatar_url'],
         });
-        syncFromCloud();
+        syncAfterLogin();
+      } else {
+        activeUserId = null;
+        store.setUser(null);
+        store.loadAllQR();
       }
+    };
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data }: { data: { session: { user: { id: string; email?: string; user_metadata?: Record<string, string> } } | null } }) => {
+      applySession(data.session);
     });
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: unknown, session: { user: { id: string; email?: string; user_metadata?: Record<string, string> } } | null) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email ?? '',
-          name: session.user.user_metadata?.['full_name'] ?? '',
-          avatarUrl: session.user.user_metadata?.['avatar_url'],
-        });
-        syncFromCloud();
-      } else {
-        setUser(null);
-        loadAllQR();
-      }
+      applySession(session);
     });
 
     return () => subscription.unsubscribe();
@@ -54,8 +57,16 @@ export function useThemeSync() {
 
   useEffect(() => {
     const root = document.documentElement;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const shouldBeDark = theme === 'dark' || (theme === 'system' && prefersDark);
-    root.classList.toggle('dark', shouldBeDark);
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const applyTheme = () => {
+      const shouldBeDark = theme === 'dark' || (theme === 'system' && media.matches);
+      root.classList.toggle('dark', shouldBeDark);
+      root.style.colorScheme = shouldBeDark ? 'dark' : 'light';
+    };
+
+    applyTheme();
+    if (theme === 'system') media.addEventListener('change', applyTheme);
+
+    return () => media.removeEventListener('change', applyTheme);
   }, [theme]);
 }

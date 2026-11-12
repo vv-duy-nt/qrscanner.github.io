@@ -12,6 +12,10 @@ export class QRStudioDB extends Dexie {
         'id, name, url, folderId, createdAt, updatedAt, syncStatus, userId',
       folders: 'id, name, createdAt',
     });
+    this.version(2).stores({
+      qrCodes: 'id, name, url, folderId, createdAt, updatedAt, syncStatus, userId',
+      folders: 'id, name, createdAt, updatedAt, syncStatus, userId',
+    });
   }
 }
 
@@ -97,7 +101,7 @@ export async function importLibraryJSON(json: string): Promise<{ imported: numbe
 
   if (data.folders) {
     for (const folder of data.folders) {
-      await saveFolder(folder);
+      await saveFolder({ ...folder, syncStatus: 'local' });
     }
   }
 

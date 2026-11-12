@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { Link2, AlertTriangle, CheckCircle, XCircle, Loader2, Save, Download, RefreshCw, Copy } from 'lucide-react';
+import { Link2, AlertTriangle, CheckCircle, XCircle, Loader2, Save, Download, RefreshCw } from 'lucide-react';
 import { useQRStore } from '../../store';
-import { createQRInstance, exportQR, checkContrast } from '../../lib/qr';
+import { createQRInstance, checkContrast, getQRCapacityError } from '../../lib/qr';
 import { validateUrlSyntax, checkUrlSafety } from '../../lib/urlCheck';
 import { Input, Textarea } from '../ui/Input';
 import { Button } from '../ui/Button';
-import { Badge, Card, Divider } from '../ui/index';
+import { Badge, Card } from '../ui/index';
 import { DesignPanel } from './DesignPanel';
 import { ExportModal } from './ExportModal';
 import type { URLSafetyStatus } from '../../types';
@@ -35,13 +35,13 @@ export function QREditor() {
   } = useQRStore();
 
   const previewRef = useRef<HTMLDivElement>(null);
-  const qrInstanceRef = useRef<ReturnType<typeof createQRInstance> | null>(null);
   const checkTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [saved, setSaved] = useState(false);
   const [contrastWarning, setContrastWarning] = useState<string>();
+  const [qrError, setQrError] = useState<string>();
 
   // Debounced URL check
   const handleUrlChange = useCallback((raw: string) => {
@@ -66,33 +66,35 @@ export function QREditor() {
 
   // Render QR preview
   useEffect(() => {
-    if (!previewRef.current) return;
+    const previewNode = previewRef.current;
+    if (!previewNode) return;
     const url = normalizedUrl || currentUrl;
     if (!url) {
-      previewRef.current.innerHTML = '';
+      previewNode.replaceChildren();
+      setQrError(undefined);
       return;
     }
 
-    if (qrInstanceRef.current) {
-      qrInstanceRef.current.update({
-        data: url,
-        width: 280,
-        height: 280,
-        margin: currentDesign.margin,
-        qrOptions: { errorCorrectionLevel: currentDesign.errorCorrection },
-        dotsOptions: { type: currentDesign.dotType, color: currentDesign.foregroundColor },
-        backgroundOptions: { color: currentDesign.backgroundColor },
-        cornersSquareOptions: { type: currentDesign.cornerSquareType, color: currentDesign.foregroundColor },
-        cornersDotOptions: { type: currentDesign.cornerDotType, color: currentDesign.foregroundColor },
-        image: currentDesign.logoUrl,
-        imageOptions: currentDesign.logoUrl
-          ? { crossOrigin: 'anonymous', margin: currentDesign.logoMargin ?? 4, imageSize: (currentDesign.logoSize ?? 30) / 100 }
-          : undefined,
-      });
-    } else {
+    const capacityError = getQRCapacityError(url, currentDesign);
+    if (capacityError) {
+      previewNode.replaceChildren();
+      setQrError(capacityError);
+      return;
+    }
+
+    try {
+      // Recreate instead of updating the previous instance. qr-code-styling can
+      // retain its old canvas during rapid React effects and append duplicates.
+      previewNode.replaceChildren();
       const instance = createQRInstance(url, { ...currentDesign, size: 280 });
-      instance.append(previewRef.current);
-      qrInstanceRef.current = instance;
+      instance.append(previewNode);
+      setQrError(undefined);
+    } catch (error) {
+      previewNode.replaceChildren();
+      const detail = error instanceof Error ? error.message : String(error);
+      setQrError(detail.includes('code length overflow')
+        ? 'URL quá dài để mã hoá thành QR. Hãy rút gọn URL hoặc chọn mức sửa lỗi thấp hơn.'
+        : `Không thể tạo mã QR: ${detail}`);
     }
 
     // Contrast check
@@ -123,17 +125,18 @@ export function QREditor() {
     setMeta({ currentTags: currentTags.filter((t) => t !== tag) });
   };
 
-  const hasValidUrl = (urlStatus === 'safe' || urlStatus === 'unchecked' || urlStatus === 'error') && (normalizedUrl || currentUrl);
+  const hasValidUrl = !qrError && (urlStatus === 'safe' || urlStatus === 'unchecked' || urlStatus === 'error') && (normalizedUrl || currentUrl);
 
   return (
     <div className="flex flex-col lg:flex-row h-full overflow-hidden">
       {/* Left: Controls */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 min-w-0">
-        <div>
-          <h1 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">
+      <div className="flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8 space-y-5 min-w-0">
+        <div className="pb-1">
+          <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-400 mb-2">Trình tạo mã</div>
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white mb-1">
             {editingId ? 'Chỉnh sửa QR' : 'Tạo QR mới'}
           </h1>
-          <p className="text-sm text-zinc-500">Nhập URL, thiết kế và lưu vào thư viện.</p>
+          <p className="text-sm text-zinc-500">Nhập địa chỉ, chọn cách hiển thị và xuất file.</p>
         </div>
 
         {/* URL Input */}
@@ -204,7 +207,7 @@ export function QREditor() {
         <DesignPanel />
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-2 pb-4">
+        <div className="flex flex-wrap items-center gap-2 pt-1 pb-4">
           {editingId && (
             <Button variant="ghost" size="md" onClick={resetEditor}>
               <RefreshCw className="h-4 w-4" /> Tạo mới
@@ -231,18 +234,26 @@ export function QREditor() {
       </div>
 
       {/* Right: Preview */}
-      <div className="lg:w-80 xl:w-96 shrink-0 border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex flex-col items-center justify-center p-6 gap-4">
-        <div className="text-sm font-medium text-zinc-500 mb-2">Xem trước</div>
+      <div className="lg:w-[360px] shrink-0 border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950 flex flex-col items-center justify-center p-6 gap-4">
+        <div className="w-[312px] flex items-center justify-between mb-1">
+          <span className="text-xs font-medium uppercase tracking-[0.1em] text-zinc-400">Bản xem trước</span>
+          <span className="text-xs tabular-nums text-zinc-400">280 × 280</span>
+        </div>
 
-        <div className="bg-white dark:bg-zinc-800 rounded-2xl p-4 shadow-md">
-          <div
-            ref={previewRef}
-            className="h-[280px] w-[280px] flex items-center justify-center"
-          >
-            {!currentUrl && (
-              <div className="text-center text-zinc-400">
-                <QrCode size={48} className="mx-auto mb-2 opacity-40" />
-                <p className="text-sm">Nhập URL để xem QR</p>
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
+          <div className="relative h-[280px] w-[280px] overflow-hidden">
+            <div
+              ref={previewRef}
+              className="h-full w-full overflow-hidden flex items-center justify-center [&>canvas]:max-w-full [&>canvas]:max-h-full [&>svg]:max-w-full [&>svg]:max-h-full"
+            />
+            {(!currentUrl || qrError) && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className={`text-center px-4 ${qrError ? 'text-red-500' : 'text-zinc-400'}`}>
+                  {qrError
+                    ? <AlertTriangle size={42} className="mx-auto mb-2 opacity-70" />
+                    : <QrCode size={48} className="mx-auto mb-2 opacity-40" />}
+                  <p className="text-sm">{qrError ?? 'Nhập URL để xem QR'}</p>
+                </div>
               </div>
             )}
           </div>
@@ -261,7 +272,7 @@ export function QREditor() {
           </div>
         )}
 
-        <Badge variant={statusBadgeVariant(urlStatus)}>
+        <Badge variant={statusBadgeVariant(urlStatus)} className="mt-1">
           {urlStatus === 'safe' ? '✓ URL đã kiểm tra' :
            urlStatus === 'danger' ? '⚠ URL nguy hiểm' :
            urlStatus === 'unchecked' ? 'Chưa kiểm tra' :

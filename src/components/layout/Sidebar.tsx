@@ -9,8 +9,8 @@ export function Sidebar() {
   const { view, setView, theme, setTheme, user, loginWithGoogle, logout, isSyncing, syncFromCloud } = useQRStore();
 
   const navItems = [
-    { id: 'editor' as const, icon: QrCode, label: 'QR Editor' },
-    { id: 'library' as const, icon: Library, label: 'My Library' },
+    { id: 'editor' as const, icon: QrCode, label: 'Tạo mã QR' },
+    { id: 'library' as const, icon: Library, label: 'Thư viện' },
     { id: 'settings' as const, icon: Settings, label: 'Cài đặt' },
   ];
 
@@ -23,15 +23,16 @@ export function Sidebar() {
   const nextTheme = { light: 'dark', dark: 'system', system: 'light' } as const;
 
   return (
-    <aside className="flex flex-col h-full w-16 md:w-56 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 py-4 px-2 shrink-0">
+    <aside className="flex flex-col h-full w-16 md:w-60 bg-zinc-50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 py-5 px-3 shrink-0">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-2 mb-6">
-        <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
-          <QrCode className="h-5 w-5 text-white" />
+      <div className="flex items-center gap-3 px-1 mb-8">
+        <div className="h-8 w-8 rounded-md bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
+          <QrCode className="h-[18px] w-[18px] text-white dark:text-zinc-950" />
         </div>
-        <span className="hidden md:block font-bold text-zinc-900 dark:text-white text-sm tracking-tight">
-          QR Studio
-        </span>
+        <div className="hidden md:block leading-tight">
+          <span className="block font-semibold text-zinc-900 dark:text-white text-sm tracking-tight">QR Studio</span>
+          <span className="block text-[10px] uppercase tracking-[0.14em] text-zinc-400 mt-0.5">Workspace</span>
+        </div>
       </div>
 
       {/* Nav */}
@@ -41,13 +42,14 @@ export function Sidebar() {
             key={id}
             onClick={() => setView(id)}
             className={cn(
-              'flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition-colors',
+              'relative flex items-center gap-3 rounded-md px-2.5 py-2.5 text-sm transition-colors',
               view === id
-                ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
-                : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                ? 'bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white font-medium shadow-[inset_0_0_0_1px_rgb(228_228_231)] dark:shadow-[inset_0_0_0_1px_rgb(39_39_42)]'
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900'
             )}
           >
-            <Icon className="h-5 w-5 shrink-0" />
+            {view === id && <span className="absolute left-0 h-4 w-0.5 rounded-full bg-blue-600" />}
+            <Icon className="h-[18px] w-[18px] shrink-0" />
             <span className="hidden md:block">{label}</span>
           </button>
         ))}

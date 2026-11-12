@@ -1,0 +1,5 @@
+project_id = "qr-studio"
+
+# Calls go through supabase.functions.invoke, which supplies the project key.
+[functions.check-url]
+verify_jwt = true

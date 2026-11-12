@@ -1,18 +1,41 @@
 @import "tailwindcss";
 
+/* Tailwind v4 defaults dark:* to the OS media query. The app controls theme
+   explicitly, so bind dark variants to the class managed by useThemeSync. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   *, *::before, *::after {
     box-sizing: border-box;
   }
 
   html {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   body {
     margin: 0;
     padding: 0;
+    background: #ffffff;
+  }
+
+  button, input, textarea, select {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  ::selection {
+    background: #dbeafe;
+    color: #172554;
   }
 
   /* Custom scrollbar */

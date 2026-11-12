@@ -27,13 +27,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             className={cn(
-              'w-full rounded-lg border bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+              'w-full rounded-md border bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 transition-colors focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500',
               error
                 ? 'border-red-400 dark:border-red-500'
                 : 'border-zinc-300 dark:border-zinc-600',
               icon ? 'pl-10' : 'pl-3',
               rightElement ? 'pr-24' : 'pr-3',
-              'h-9 text-sm',
+              'h-10 text-sm',
               className
             )}
             {...props}
@@ -69,7 +69,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           className={cn(
-            'w-full rounded-lg border bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent px-3 py-2 text-sm resize-none',
+            'w-full rounded-md border bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 transition-colors focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 px-3 py-2 text-sm resize-none',
             error ? 'border-red-400' : 'border-zinc-300 dark:border-zinc-600',
             className
           )}

@@ -54,8 +54,8 @@ export function ExportModal({ url, design, name, onClose }: Props) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-sm border border-zinc-200 dark:border-zinc-700">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl w-full max-w-sm border border-zinc-200 dark:border-zinc-700">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-zinc-200 dark:border-zinc-700">
           <h2 className="font-semibold text-zinc-900 dark:text-white">Tải xuống QR</h2>
@@ -75,8 +75,8 @@ export function ExportModal({ url, design, name, onClose }: Props) {
                   onClick={() => setFormat(f.value)}
                   className={`py-2 rounded-lg text-sm font-medium border transition-colors ${
                     format === f.value
-                      ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:border-indigo-400'
+                      ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 border-zinc-900 dark:border-zinc-100'
+                      : 'border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:border-zinc-500'
                   }`}
                 >
                   {f.label}
@@ -96,8 +96,8 @@ export function ExportModal({ url, design, name, onClose }: Props) {
                     onClick={() => setSize(s)}
                     className={`py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                       size === s
-                        ? 'bg-indigo-600 text-white border-indigo-600'
-                        : 'border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:border-indigo-400'
+                        ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 border-zinc-900 dark:border-zinc-100'
+                        : 'border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:border-zinc-500'
                     }`}
                   >
                     {s >= 1024 ? `${s / 1024}K` : s}
@@ -118,7 +118,7 @@ export function ExportModal({ url, design, name, onClose }: Props) {
                     onClick={() => setPdfSize(p.value)}
                     className={`py-2 rounded-lg text-xs font-medium border transition-colors ${
                       pdfSize === p.value
-                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 border-zinc-900 dark:border-zinc-100'
                         : 'border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400'
                     }`}
                   >
