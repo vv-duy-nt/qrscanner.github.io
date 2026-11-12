@@ -31,9 +31,12 @@
 
 ## Cài đặt & Chạy local
 
+Yêu cầu: Node.js 24 và npm 11.
+
 ```bash
 git clone https://github.com/[username]/QR-Generated.git
 cd QR-Generated
+nvm use
 npm install
 cp .env.example .env     # điền Supabase keys nếu muốn dùng Cloud
 npm run dev
